@@ -72,14 +72,42 @@ with col_in3:
 modified_client = client.copy()
 
 # Słownik z parametrami transformacji (IQR clipping + Z-score) wyliczony z danych treningowych
-STATS = {
-    "AMT_INCOME_TOTAL": {"mean": 162727.786, "std": 73285.162, "lower": -22500.0, "upper": 337500.0},
-    "AMT_CREDIT": {"mean": 592698.074, "std": 380435.346, "lower": -537975.0, "upper": 1616625.0},
-    "AMT_ANNUITY": {"mean": 26795.941, "std": 13286.719, "lower": -10570.5, "upper": 61681.5},
-    "LOAN_TO_GOOD": {"mean": 1.12218, "std": 0.12127, "lower": 0.703, "upper": 1.495},
-    "CREDIT_DURATION": {"mean": 21.624, "std": 7.816, "lower": -1.531, "upper": 44.279},
-    "ANNUITY_TO_INCOME": {"mean": 0.1784, "std": 0.0859, "lower": -0.0571, "upper": 0.4002}
-}
+@st.cache_data
+def get_dynamic_stats():
+    from sklearn.model_selection import train_test_split
+    df_raw = pd.read_csv("data/application_train_raw_subset.csv.gz")
+    X_raw = df_raw.drop(columns=['TARGET'])
+    y_raw = df_raw['TARGET']
+    X_train_raw, _, _, _ = train_test_split(X_raw, y_raw, test_size=0.3, stratify=y_raw, random_state=42)
+
+    df_train_raw = X_train_raw.copy()
+    df_train_raw["LOAN_TO_GOOD"] = df_train_raw["AMT_CREDIT"] / df_train_raw["AMT_GOODS_PRICE"]
+    df_train_raw["CREDIT_DURATION"] = df_train_raw["AMT_CREDIT"] / df_train_raw["AMT_ANNUITY"]
+    df_train_raw["ANNUITY_TO_INCOME"] = df_train_raw["AMT_ANNUITY"] / df_train_raw["AMT_INCOME_TOTAL"]
+
+    target_cols = ["AMT_INCOME_TOTAL", "AMT_CREDIT", "AMT_ANNUITY", "LOAN_TO_GOOD", "CREDIT_DURATION", "ANNUITY_TO_INCOME"]
+    dynamic_stats = {}
+    for col in target_cols:
+        series = df_train_raw[col].dropna()
+        q1 = series.quantile(0.25)
+        q3 = series.quantile(0.75)
+        iqr = q3 - q1
+        lower = q1 - 1.5 * iqr
+        upper = q3 + 1.5 * iqr
+
+        series_clipped = np.clip(series, lower, upper)
+        mean = series_clipped.mean()
+        std = series_clipped.std()
+
+        dynamic_stats[col] = {
+            "mean": mean,
+            "std": std,
+            "lower": lower,
+            "upper": upper
+        }
+    return dynamic_stats
+
+STATS = get_dynamic_stats()
 
 # Odskalowanie do wartości surowych (odpowiadających skali po obcięciu outlierów)
 raw_income_orig = client["AMT_INCOME_TOTAL"].values[0] * STATS["AMT_INCOME_TOTAL"]["std"] + STATS["AMT_INCOME_TOTAL"]["mean"]

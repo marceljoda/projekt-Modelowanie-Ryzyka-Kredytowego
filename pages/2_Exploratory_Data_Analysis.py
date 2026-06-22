@@ -16,7 +16,7 @@ def load_processed_data():
 @st.cache_data
 def load_raw_column(col_name):
     # Wczytujemy tylko tę jedną kolumnę w celu optymalizacji pamięci i prędkości
-    return pd.read_csv("data/application_train.csv", usecols=[col_name])
+    return pd.read_csv("data/application_train_raw_subset.csv.gz", usecols=[col_name])
 
 # Słownik transformacji przed / po
 MAPPING_BEFORE_AFTER = {
