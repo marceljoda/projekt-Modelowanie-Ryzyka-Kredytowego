@@ -23,8 +23,8 @@ Dane: Home Credit Default Risk
 
 pg = st.navigation([
     st.Page(strona_startowa, title="Strona startowa", icon="🏠"),
-    st.Page("pages/1_Model_Overview.py", title="Podsumowanie modeli", icon="📊"),
     st.Page("pages/2_Exploratory_Data_Analysis.py", title="Eksploracyjna analiza danych", icon="📈"),
+    st.Page("pages/1_Model_Overview.py", title="Podsumowanie modeli", icon="📊"),
     st.Page("pages/3_Client_Explorer.py", title="Eksplorator klientów", icon="👤"),
     st.Page("pages/4_Credit_Scoring.py", title="Scoring kredytowy", icon="💳"),
 ])

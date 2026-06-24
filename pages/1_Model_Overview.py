@@ -72,13 +72,7 @@ y = df["TARGET"]
 # Sekcja 1: Główny Model i parametry odcięcia
 # ------------------------------------------------------------------------------
 
-threshold = st.slider(
-    "Próg odcięcia",
-    min_value=0.1,
-    max_value=0.9,
-    value=0.6367,
-    step=0.01
-)
+threshold = 0.5
 
 # Predykcje dla wybranego progu
 y_prob = model.predict_proba(X)[:, 1]
